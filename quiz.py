@@ -1,43 +1,60 @@
-import streamlit as st
 import random
+import streamlit as st
 
 # -------------------------
-# Access control (Top of file)
+# Password Protection
 # -------------------------
+ACCESS_CODE = "Avasmamta"  # Change this to your desired password
+
 password = st.text_input("Enter Access Code:", type="password")
-
-if password != "Avasmamta":
+if password != ACCESS_CODE:
     st.warning("🔒 Please enter the correct access code to continue.")
-    st.stop()  # stops execution if password is wrong
+    st.stop()  # Stops the script if password is wrong
 
 # -------------------------
-# Quiz code starts here
+# Existing Quiz Code
 # -------------------------
-st.title("📝 Math Quiz App")
+st.title("🧮 Math Quiz Game")
 
-questions = [
-    {
-        "question": "What is 5 + 3?",
-        "options": ["A. 6", "B. 7", "C. 8", "D. 9"],
-        "answer": "C"
-    },
-    {
-        "question": "What is 9 - 4?",
-        "options": ["A. 3", "B. 4", "C. 5", "D. 6"],
-        "answer": "C"
-    }
-]
+# Initialize session state
+if "score" not in st.session_state:
+    st.session_state.score = 0
+    st.session_state.q_no = 0
 
-score = 0
+def generate_question():
+    a = random.randint(1, 20)
+    b = random.randint(1, 20)
+    operator = random.choice(["+", "-", "*"])
+    if operator == "+":
+        answer = a + b
+    elif operator == "-":
+        answer = a - b
+    else:
+        answer = a * b
+    question = f"{a} {operator} {b} = ?"
+    options = [answer,
+               answer + random.randint(1, 5),
+               answer - random.randint(1, 5),
+               answer + random.randint(6, 10)]
+    random.shuffle(options)
+    return question, options, answer
 
-for q in questions:
-    st.subheader(q["question"])
-    choice = st.radio("Choose an answer:", q["options"], key=q["question"])
-    if st.button("Submit", key="submit"+q["question"]):
-        if choice.startswith(q["answer"]):
+# Button to generate new question
+if st.button("New Question") or st.session_state.q_no == 0:
+    q, opts, ans = generate_question()
+    st.session_state.q = q
+    st.session_state.opts = opts
+    st.session_state.ans = ans
+    st.session_state.q_no += 1
+
+# Show question
+if "q" in st.session_state:
+    st.write(f"**Q{st.session_state.q_no}: {st.session_state.q}**")
+    choice = st.radio("Choose your answer:", st.session_state.opts)
+    if st.button("Submit Answer"):
+        if choice == st.session_state.ans:
             st.success("✅ Correct!")
-            score += 1
+            st.session_state.score += 1
         else:
-            st.error("❌ Wrong! Correct answer is " + q["answer"])
-
-st.write(f"Your final score: {score}/{len(questions)}")
+            st.error(f"❌ Wrong! Correct Answer: {st.session_state.ans}")
+        st.write(f"**Score: {st.session_state.score}**")
